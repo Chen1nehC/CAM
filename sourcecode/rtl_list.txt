@@ -1,0 +1,3 @@
+../sourcecode/rtl/CAM.v
+../sourcecode/rtl/CAM_Subarray.v
+../sourcecode/rtl/CAM_Subarray_Exp.v

@@ -1,0 +1,8 @@
+# To run with verdi: `cd ../workspace/`
+#	  `make -f ../scripts/vcs_sim.mk TB=<your_tb_module_name>`
+#	or`make -f ../scripts/vcs_sim.mk all TB=<your_tb_module_name>`
+#To clean vcs files in worskspace:
+#	  `make -f ../scripts/vcs_sim.mk clean
+#To run without verdi:
+#	  `make -f ../scripts/vcs_sim.mk run TB=<your_tb_module_name>`
+#	   default tb is top

@@ -1,0 +1,9 @@
+#!/bin/sh -h 
+PYTHONHOME=/opt/synopsys/vcs/Q-2020.03-SP2-7/etc/search/pyh
+export PYTHONHOME
+PYTHONPATH=/opt/synopsys/vcs/Q-2020.03-SP2-7/linux64/lib/pylib27
+export PYTHONPATH
+LD_LIBRARY_PATH=/opt/synopsys/vcs/Q-2020.03-SP2-7/linux64/lib:/opt/synopsys/vcs/Q-2020.03-SP2-7/linux64/lib/pylib27
+export LD_LIBRARY_PATH
+/opt/synopsys/vcs/Q-2020.03-SP2-7/linux64/bin/vcsfind_create_index.exe  -z  "/home/host/Desktop/project/CAM/workspace/../workspace/simv.daidir/debug_dump/fsearch/./idents_pxBTt3.xml.gz" "/home/host/Desktop/project/CAM/workspace/../workspace/simv.daidir/debug_dump/fsearch/./idents_tapi.xml.gz" -o "/home/host/Desktop/project/CAM/workspace/../workspace/simv.daidir/debug_dump/fsearch/fsearch.db_tmp"
+\mv "/home/host/Desktop/project/CAM/workspace/../workspace/simv.daidir/debug_dump/fsearch/fsearch.db_tmp" "/home/host/Desktop/project/CAM/workspace/../workspace/simv.daidir/debug_dump/fsearch/fsearch.db"
