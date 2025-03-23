@@ -1,2 +1,1 @@
-../sourcecode/tb/CAM_Subarray_TB.v
-../sourcecode/tb/CAM_Subarray_Exp_TB.v
+../sourcecode/tb/tb_CAM_Top.v

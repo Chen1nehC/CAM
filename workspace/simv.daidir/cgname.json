@@ -5,16 +5,22 @@
         "module",
         1
     ],
-    "CAM_Subarray_Exp_TB": [
-        "CAM_Subarray_Exp_TB",
-        "kcumw",
+    "CAM_Top_0000": [
+        "CAM_Top_0000",
+        "YZVWK",
         "module",
         2
+    ],
+    "tb_CAM_Top": [
+        "tb_CAM_Top",
+        "dE1gp",
+        "module",
+        3
     ],
     "...MASTER...": [
         "SIM",
         "amcQw",
         "module",
-        3
+        4
     ]
 }

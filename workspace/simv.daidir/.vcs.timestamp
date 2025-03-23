@@ -40,10 +40,10 @@
 ../workspace/vcs_compile.log
 ../workspace/simv
 /opt/synopsys/verdi/R-2020.12-SP1/share/PLI/VCS/LINUX64/verdi.tab
-CAM_Subarray_Exp_TB
+tb_CAM_Top
 ../sourcecode/rtl_list.txt
 ../sourcecode/tb_list.txt
-87
+72
 wv_HOME=/opt/synopsys/wv/S-2021.09
 syn_HOME=/opt/synopsys/syn/R-2020.09-SP4
 spyglass_HOME=/opt/synopsys/spyglass/P-2019.06-SP1-1
@@ -53,20 +53,15 @@ lc_HOME=/opt/synopsys/lc/R-2020.09-SP3
 icc2_HOME=/opt/synopsys/icc2/R-2020.09-SP1
 hspice_HOME=/opt/synopsys/hspice/S-2021.09
 fm_HOME=/opt/synopsys/fm/Q-2019.12-SP2
-XMODIFIERS=@im=ibus
-XDG_VTNR=1
-XDG_SESSION_TYPE=x11
-XDG_SESSION_ID=2
-XDG_SESSION_DESKTOP=gnome-classic
-XDG_SEAT=seat0
+XDG_SESSION_ID=93
 XDG_RUNTIME_DIR=/run/user/1001
-XDG_MENU_PREFIX=gnome-
-XDG_DATA_DIRS=/home/host/.local/share/flatpak/exports/share/:/var/lib/flatpak/exports/share/:/usr/local/share/:/usr/share/
-XDG_CURRENT_DESKTOP=GNOME-Classic:GNOME
-XAUTHORITY=/run/gdm/auth-for-host-X3oyrT/database
-WINDOWPATH=1
+XDG_DATA_DIRS=/home/host/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
 Virtuoso_HOME=/opt/cadence/ic618
-VTE_VERSION=5204
+VSCODE_IPC_HOOK_CLI=/run/user/1001/vscode-ipc-68e8a342-dbaa-4929-8c56-dd2d406b1cd7.sock
+VSCODE_GIT_IPC_HANDLE=/run/user/1001/vscode-git-605f4289d7.sock
+VSCODE_GIT_ASKPASS_NODE=/home/host/.vscode-server/cli/servers/Stable-ddc367ed5c8936efe395cffeec279b04ffd7db78/server/node
+VSCODE_GIT_ASKPASS_MAIN=/home/host/.vscode-server/cli/servers/Stable-ddc367ed5c8936efe395cffeec279b04ffd7db78/server/extensions/git/dist/askpass-main.js
+VSCODE_GIT_ASKPASS_EXTRA_ARGS=
 VMR_MODE_FLAG=64
 VERDI_HOME=/opt/synopsys/verdi/R-2020.12-SP1
 VCS_TARGET_ARCH=amd64
@@ -77,18 +72,19 @@ VCS_HOME=/opt/synopsys/vcs/Q-2020.03-SP2-7
 VCS_DEPTH=0
 VCS_ARG_ADDED_FOR_TMP=1
 VCS_ARCH=linux64
-USERNAME=host
 UNAME=/bin/uname
 TOOL_HOME=/opt/synopsys/vcs/Q-2020.03-SP2-7/linux64
-TB=CAM_Subarray_Exp_TB
+TERM_PROGRAM_VERSION=1.98.2
+TERM_PROGRAM=vscode
+TB=tb_CAM_Top
 Synopsys_Dir=/opt/synopsys
-SSH_AUTH_SOCK=/run/user/1001/keyring/ssh
-SSH_AGENT_PID=2793
-SESSION_MANAGER=local/unix:@/tmp/.ICE-unix/2665,unix/unix:/tmp/.ICE-unix/2665
+SSL_CERT_FILE=/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem
+SSL_CERT_DIR=/etc/pki/tls/certs
+SSH_CONNECTION=192.168.192.1 17746 192.168.192.131 22
+SSH_CLIENT=192.168.192.1 17746 22
 SCRNAME=vcs
 SCRIPT_NAME=vcs
 SCL_HOME=/opt/synopsys/scl/2021.03
-QT_IM_MODULE=ibus
 QT_GRAPHICSSYSTEM_CHECKED=1
 QTLIB=/usr/lib64/qt-3.3/lib
 QTINC=/usr/lib64/qt-3.3/include
@@ -108,22 +104,11 @@ MGC_FDI_OA_VERSION=22.60
 MFLAGS=
 MAKEOVERRIDES=${-*-command-variables-*-}
 MAKELEVEL=1
-MAKEFLAGS=TB=CAM_Subarray_Exp_TB
+MAKEFLAGS=TB=tb_CAM_Top
 LESSOPEN=||/usr/bin/lesspipe.sh %s
 LC_ALL=C
-IMSETTINGS_MODULE=none
-IMSETTINGS_INTEGRATE_DESKTOP=yes
 HISTCONTROL=ignoredups
-GNOME_TERMINAL_SERVICE=:1.114
-GNOME_TERMINAL_SCREEN=/org/gnome/Terminal/screen/abbb711d_f030_46cf_b901_bc51a38e7bc9
-GNOME_SHELL_SESSION_MODE=classic
-GNOME_DESKTOP_SESSION_ID=this-is-deprecated
-GDM_LANG=en_US.UTF-8
-GDMSESSION=gnome-classic
-DESKTOP_SESSION=gnome-classic
-DBUS_STARTER_BUS_TYPE=session
-DBUS_STARTER_ADDRESS=unix:abstract=/tmp/dbus-Kz88mj6Etq,guid=27a91295decbd306d84d75a267cfcfa5
-DBUS_SESSION_BUS_ADDRESS=unix:abstract=/tmp/dbus-Kz88mj6Etq,guid=27a91295decbd306d84d75a267cfcfa5
+GIT_ASKPASS=/home/host/.vscode-server/cli/servers/Stable-ddc367ed5c8936efe395cffeec279b04ffd7db78/server/extensions/git/dist/askpass.sh
 Cadence_Dir=/opt/cadence
 COLORTERM=truecolor
 CDS_Netlisting_Mode=Analog
@@ -132,14 +117,11 @@ CDS_LIC_FILE=/opt/cadence/license/license.dat
 CDS_AUTO_64BIT=ALL
 CALIBRE_HOME=/opt/mentor/calibre/aoi_cal_2021.2_28.15
 0
-9
-1741687895 ../sourcecode/tb/CAM_Subarray_Exp_TB.v
-1741687896 ../sourcecode/tb/CAM_Subarray_TB.v
-1741687893 ../sourcecode/rtl/CAM_Subarray_Exp.v
-1741686571 ../sourcecode/rtl/CAM_Subarray.v
-1741672536 ../sourcecode/rtl/CAM.v
-1741688092 ../sourcecode/tb_list.txt
-1741688092 ../sourcecode/rtl_list.txt
+6
+1742734134 ../sourcecode/tb/tb_CAM_Top.v
+1742734072 ../sourcecode/rtl/CAM_Top.v
+1742734137 ../sourcecode/tb_list.txt
+1742734137 ../sourcecode/rtl_list.txt
 1614702492 /opt/synopsys/verdi/R-2020.12-SP1/share/PLI/VCS/LINUX64/verdi.tab
 1627355318 /opt/synopsys/vcs/Q-2020.03-SP2-7/linux64/lib/vcsdp_lite.tab
 4
@@ -147,5 +129,5 @@ CALIBRE_HOME=/opt/mentor/calibre/aoi_cal_2021.2_28.15
 1627355695 /opt/synopsys/vcs/Q-2020.03-SP2-7/linux64/lib/liberrorinf.so
 1627355657 /opt/synopsys/vcs/Q-2020.03-SP2-7/linux64/lib/libsnpsmalloc.so
 1627355692 /opt/synopsys/vcs/Q-2020.03-SP2-7/linux64/lib/libvfs.so
-1741688093 ../workspace/simv.daidir
+1742734139 ../workspace/simv.daidir
 -1 partitionlib

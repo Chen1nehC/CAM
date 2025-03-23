@@ -8,7 +8,7 @@ UUM=FALSE
 KDB=FALSE
 USE_NOVAS_HOME=FALSE
 COSIM=FALSE
-TOP=CAM_Subarray_Exp_TB 
+TOP=tb_CAM_Top 
 OPTION=-ssv -ssy 
 ELAB_OPTION=-ssv -ssy 
 

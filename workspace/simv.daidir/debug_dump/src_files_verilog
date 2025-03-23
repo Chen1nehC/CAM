@@ -1,5 +1,2 @@
-/home/host/Desktop/project/CAM/sourcecode/rtl/CAM.v
-/home/host/Desktop/project/CAM/sourcecode/rtl/CAM_Subarray.v
-/home/host/Desktop/project/CAM/sourcecode/rtl/CAM_Subarray_Exp.v
-/home/host/Desktop/project/CAM/sourcecode/tb/CAM_Subarray_Exp_TB.v
-/home/host/Desktop/project/CAM/sourcecode/tb/CAM_Subarray_TB.v
+/home/host/Desktop/project/CAM/sourcecode/rtl/CAM_Top.v
+/home/host/Desktop/project/CAM/sourcecode/tb/tb_CAM_Top.v
