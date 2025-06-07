@@ -1,12 +1,12 @@
 `timescale 1ns / 1ps
 
-module tb_CAM_Top;
+module tb_CAM_Top_Eng;
 
-    // 信号定义
+    // Signal Definition
     reg rst_n;
     reg CLK;
-    reg [31:0] data_in;
-    reg signal_in;
+    reg [31:0] data_in_0;
+    reg [31:0] data_in_1;
     reg [4:0] cmp_addr_1;
     reg [4:0] cmp_addr_2;
     reg [1:0] ppg_addr_1;
@@ -18,44 +18,40 @@ module tb_CAM_Top;
     reg [7:0] exp_in_1;
     reg [7:0] exp_in_2;
     reg [4:0] state_ctrl;
-    reg vref;
-    reg sampled;
-    reg preb;
-    reg diff;
     reg acc_en;
     reg [31:0] chip_enable;
     reg SEARCH_2row;
+    reg [2:0] ppg_addr_msb;
     wire [5:0] sum_0;
     wire [5:0] sum_1;
     
     reg [4:0] Emax_0;
     reg [4:0] Emax_1;
+    real input_0;
+    real input_1;
     real part_sum_0;
     real part_sum_1;
     real final_result_0;
     real final_result_1;
 
-    // 实例化CAM_Top模块
-    CAM_Top uut (
+    // instantiate CAM_Top module
+    CAM_Top_Eng uut (
         .rst_n(rst_n),
         .CLK(CLK),
-        .data_in(data_in),
-        .signal_in(signal_in),
+        .data_in_0(data_in_0),
+        .data_in_1(data_in_1),
         .cmp_addr_1(cmp_addr_1),
         .cmp_addr_2(cmp_addr_2),
         .ppg_addr_1(ppg_addr_1),
         .ppg_addr_2(ppg_addr_2),
         .cmp_data_1(cmp_data_1),
+        .ppg_addr_msb(ppg_addr_msb),
         .cmp_data_2(cmp_data_2),
         .ppg_data_1(ppg_data_1),
         .ppg_data_2(ppg_data_2),
         .exp_in_1(exp_in_1),
         .exp_in_2(exp_in_2),
         .state_ctrl(state_ctrl),
-        .vref(vref),
-        .sampled(sampled),
-        .preb(preb),
-        .diff(diff),
         .acc_en(acc_en),
         .chip_enable(chip_enable),
         .SEARCH_2row(SEARCH_2row),
@@ -63,38 +59,34 @@ module tb_CAM_Top;
         .sum_1(sum_1)
     );
 
-    // 时钟生成
+    // Clock generation
     initial begin
         CLK = 0;
-        forever #5 CLK = ~CLK;  // 100MHz 时钟周期
+        forever #5 CLK = ~CLK;  // 100MHz
     end
 
-    // 仿真过程
+    // Simulation process
     initial begin
-        // **波形文件**
-        $fsdbDumpfile("CAM_Top.fsdb");
-        $fsdbDumpvars(0, tb_CAM_Top);
-
-        // 初始化信号
-        rst_n = 0; data_in = 32'b0; signal_in = 0;
+        // Initialization signal
+        rst_n = 0; data_in_0 = 32'b0; data_in_1 = 32'b0;
         cmp_addr_1 = 5'b0; cmp_addr_2 = 5'b0; ppg_addr_1 = 2'b0; ppg_addr_2 = 2'b0;
         cmp_data_1 = 0; cmp_data_2 = 0; ppg_data_1 = 0; ppg_data_2 = 0; exp_in_1 = 8'b0; exp_in_2 = 8'b0; 
-        state_ctrl = 5'b0;
-        vref = 0; sampled = 0; preb = 0; diff = 0;     
+        state_ctrl = 5'b0;     
         acc_en = 0;
-        chip_enable = 32'b0;  // 默认不使能
+        chip_enable = 32'b0;  // Disabled by default
         SEARCH_2row = 0;
-        
-        // 复位
+        ppg_addr_msb = 0;
+
+        // Reset
         #10 rst_n = 1;
 
-        //mem全部清零
+        //mem is all reset
         clear_mem(0); clear_mem_exp_max(1);
         clear_mem(2); clear_mem(3); clear_mem(4); clear_mem(5); clear_mem(6); clear_mem(7); clear_mem(8); clear_mem(9); clear_mem(10); clear_mem(11); clear_mem(12); clear_mem(13); clear_mem(14); clear_mem(15);
         clear_mem(16); clear_mem_exp_max(17);
         clear_mem(18); clear_mem(19); clear_mem(20); clear_mem(21); clear_mem(22); clear_mem(23);clear_mem(24); clear_mem(25); clear_mem(26); clear_mem(27); clear_mem(28); clear_mem(29); clear_mem(30); clear_mem(31);
 
-        /* Example:
+        /* Example 1:
         Input1[0]:  0_00011_11000_00000 (1.5  X 2^3 = 12.0)
         Input1[1]:  0_00011_10100_00000 (1.25 X 2^3 = 10.0)
         Input1[2]:  0_00001_11000_00000 (1.5  X 2^1 =  3.0)
@@ -104,114 +96,191 @@ module tb_CAM_Top;
         Input2[1]:  0_00011_10010_00000 (1.125 X 2^3 = 9.0)
         Input2[2]:  0_00000_11000_00000 (1.5  X 2^0 =  1.5)
         Input2[3]:  0_00011_10000_00000 (1.0  X 2^3 =  8.0)
+
+        Ideal Output = Input1 * Input2 = 120 + 90 + 4.5 + 48 = 262.5
+
+        Example 2:
+        Input3[0]:  0_00011_11100_00000 (1.75 X 2^3 = 14.0)
+        Input3[1]:  0_00001_10100_00000 (1.25 X 2^1 =  2.5)
+        Input3[2]:  0_00011_11000_00000 (1.5  X 2^3 = 12.0)
+        Input3[3]:  0_00010_11000_00000 (1.5  X 2^2 =  6.0)
+
+        Input4[0]:  0_00001_10100_00000 (1.25 X 2^1 =  2.5)
+        Input4[1]:  0_00010_10000_00000 (1.0  X 2^2 =  4.0)
+        Input4[2]:  0_00000_11000_00000 (1.5  X 2^0 =  1.5)
+        Input4[3]:  0_00010_11000_00000 (1.5  X 2^2 =  6.0)
+
+        Ideal Output = Input3 * Input4 = 35 + 10 + 18 + 36 = 99.0
         */
+        
+        // test if the result is right
+        input_0 = 262.5; input_1 = 99.0;
 
-        // 状态0:写入数据从 mem4[cmp_addr_1] 到 mem9[cmp_addr_1]
-        // 设置条件：Ttag=0, FB=0, acc=0, Lshift=0, Rshift=0, Ftag=0, we=1
-        cmp_addr_1 = 5'd0;  // 写入第0行，即第一个向量
+        // State 0: Write data from mem4[cmp_addr_1] to mem9[cmp_addr_1]
+        // Set conditions: Ttag=0, FB=0, acc=0, Lshift=0, Rshift=0, Ftag=0, we=1
+        
+        // Write row 0, the 1st and 3rd vector
+        cmp_addr_1 = 5'd0;  
+        cmp_addr_2 = 5'd0;  
         state_ctrl = 5'd0;
 
-        chip_enable[4] = 1; // mem4写入的向量1
-        data_in = 32'b1101_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
+        chip_enable[4] = 1; // Vector 1 written by mem4
+        chip_enable[20] = 1; // Vector 3 written by mem20
+        data_in_0 = 32'b1101_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b1011_0000_0000_0000_0000_0000_0000_0000; 
+        #10;
         chip_enable[4] = 0;
-        chip_enable[5] = 1; // mem5写入的向量1
-        data_in = 32'b1110_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
-        chip_enable[5] = 0;
-        chip_enable[6] = 1; // mem6写入的向量1
-        data_in = 32'b1111_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
-        chip_enable[6] = 0;
-        chip_enable[7] = 1; // mem7写入的向量1
-        data_in = 32'b1011_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
-        chip_enable[7] = 0;
-        chip_enable[8] = 1; // mem8写入的向量1
-        data_in = 32'b0100_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
-        chip_enable[8] = 0;
+        chip_enable[20] = 0;
 
-        cmp_addr_1 = 5'd1;  // 写入第1行，即第二个向量
+        chip_enable[5] = 1; // Vector 1 written by mem5
+        chip_enable[21] = 1; //  Vector 3 written by mem21
+        data_in_0 = 32'b1110_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b1110_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
+        chip_enable[5] = 0;
+        chip_enable[21] = 0;
+
+        chip_enable[6] = 1; // Vector 1 written by mem6
+        chip_enable[22] = 1; //  Vector 3 written by mem22
+        data_in_0 = 32'b1111_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b1111_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
+        chip_enable[6] = 0;
+        chip_enable[22] = 0;
+
+        chip_enable[7] = 1; // Vector 1 written by mem7
+        chip_enable[23] = 1; //  Vector 3 written by mem23
+        data_in_0 = 32'b1011_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b1011_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
+        chip_enable[7] = 0;
+        chip_enable[23] = 0;
+
+        chip_enable[8] = 1; // Vector 1 written by mem8
+        chip_enable[24] = 1; //  Vector 3 written by mem24
+        data_in_0 = 32'b0100_0000_0000_0000_0000_0000_0000_0000;   
+        data_in_1 = 32'b1100_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
+        chip_enable[8] = 0;
+        chip_enable[24] = 0;
+        
+        // Write row 1, the 2nd and 4th vector
+        cmp_addr_1 = 5'd1;  
+        cmp_addr_2 = 5'd1; 
         state_ctrl = 5'd0;
 
-        chip_enable[4] = 1; // mem4写入的向量2
-        data_in = 32'b1101_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
+        chip_enable[4] = 1; // Vector 2 written by mem4
+        chip_enable[20] = 1; // Vector 4 written by mem20
+        data_in_0 = 32'b1101_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b0101_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
         chip_enable[4] = 0;
-        chip_enable[5] = 1; // mem5写入的向量2
-        data_in = 32'b1101_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
+        chip_enable[20] = 0;
+
+        chip_enable[5] = 1; // Vector 2 written by mem5
+        chip_enable[21] = 1; // Vector 4 written by mem21
+        data_in_0 = 32'b1101_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b1000_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
         chip_enable[5] = 0;
-        chip_enable[6] = 1; // mem6写入的向量2
-        data_in = 32'b1111_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
+        chip_enable[21] = 0;
+
+        chip_enable[6] = 1; // Vector 2 written by mem6
+        chip_enable[22] = 1; // Vector 4 written by mem22
+        data_in_0 = 32'b1111_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b1111_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
         chip_enable[6] = 0;
-        chip_enable[7] = 1; // mem7写入的向量2
-        data_in = 32'b0010_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
+        chip_enable[22] = 0;
+
+        chip_enable[7] = 1; // Vector 2 written by mem7
+        chip_enable[23] = 1; // Vector 4 written by mem23
+        data_in_0 = 32'b0010_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b0011_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
         chip_enable[7] = 0;
-        chip_enable[8] = 1; // mem8写入的向量2
-        data_in = 32'b1000_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
+        chip_enable[23] = 0;
+
+        chip_enable[8] = 1; // Vector 2 written by mem8
+        chip_enable[24] = 1; // Vector 4 written by mem24
+        data_in_0 = 32'b1000_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b1000_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
         chip_enable[8] = 0;
-        chip_enable[9] = 1; // mem9写入的向量2
-        data_in = 32'b0100_0000_0000_0000_0000_0000_0000_0000;  
-        #1000;
+        chip_enable[24] = 0;
+
+        chip_enable[9] = 1; // Vector 2 written by mem9
+        chip_enable[25] = 1; // Vector 4 written by mem25
+        data_in_0 = 32'b0100_0000_0000_0000_0000_0000_0000_0000;  
+        data_in_1 = 32'b0000_0000_0000_0000_0000_0000_0000_0000;  
+        #10;
         chip_enable[9] = 0;
+        chip_enable[25] = 0;
 
-
-        // 状态1:FB_search_and_update_block，先针对指数部分 mem1 到 mem5 测试S的搜索更新，S存储在meta data第一行
-        // 设置条件：Ttag=0, FB=1, acc=0, Lshift=0, Rshift=0, Ftag=0, we=0
-        SEARCH_2row = 1; //搜索1_0
+        // State 1:FB_search_and_update_block, first test the search update of S for the exponential parts mem1 to mem5, S is stored in the first row of meta data
+        // Set conditions: Ttag=0, FB=1, acc=0, Lshift=0, Rshift=0, Ftag=0, we=0
+        SEARCH_2row = 1; // Search 1_0
         state_ctrl = 5'd1; cmp_addr_1 = 5'd0; cmp_addr_2 = 5'd1; cmp_data_1 = 1; cmp_data_2 = 0;
-        chip_enable[1] = 1; chip_enable[2] = 1; chip_enable[3] = 1; chip_enable[4] = 1; chip_enable[5] = 1; #1000;
+        ppg_addr_msb = 0;
+         chip_enable[1] = 1; chip_enable[2] = 1; chip_enable[3] = 1; chip_enable[4] = 1; chip_enable[5] = 1; 
+        chip_enable[17] = 1; chip_enable[18] = 1; chip_enable[19] = 1; chip_enable[20] = 1; chip_enable[21] = 1; 
+        #10;
         chip_enable[1] = 0; chip_enable[2] = 0; chip_enable[3] = 0; chip_enable[4] = 0; chip_enable[5] = 0;
-        
-        SEARCH_2row = 1; //搜索0_1
+        chip_enable[17] = 0; chip_enable[18] = 0; chip_enable[19] = 0; chip_enable[20] = 0; chip_enable[21] = 0; 
+
+        SEARCH_2row = 1; // Search 0_1
         state_ctrl = 5'd1; cmp_addr_1 = 5'd0; cmp_addr_2 = 5'd1; cmp_data_1 = 0; cmp_data_2 = 1;
-        chip_enable[1] = 1; chip_enable[2] = 1; chip_enable[3] = 1; chip_enable[4] = 1; chip_enable[5] = 1; #1000;
+        ppg_addr_msb = 0;
+        chip_enable[1] = 1; chip_enable[2] = 1; chip_enable[3] = 1; chip_enable[4] = 1; chip_enable[5] = 1; 
+        chip_enable[17] = 1; chip_enable[18] = 1; chip_enable[19] = 1; chip_enable[20] = 1; chip_enable[21] = 1;
+        #10;
         chip_enable[1] = 0; chip_enable[2] = 0; chip_enable[3] = 0; chip_enable[4] = 0; chip_enable[5] = 0;
+        chip_enable[17] = 0; chip_enable[18] = 0; chip_enable[19] = 0; chip_enable[20] = 0; chip_enable[21] = 0; 
         
-        // 状态2:L_search_and_update_block，先针对指数部分 mem1 到 mem5 测试 C 的搜索更新，C存储在meta data第二行
-        // 设置条件：Ttag=0, FB=0, acc=0, Lshift=1, Rshift=0, Ftag=0, we=0
+        // State 2:L_search_and_update_block, first test the search update of C for the exponential parts mem1 to mem5, C is stored in the second line of meta data
+        // Set conditions: Ttag=0, FB=0, acc=0, Lshift=1, Rshift=0, Ftag=0, we=0
         SEARCH_2row = 1;
         state_ctrl = 5'd2; cmp_addr_1 = 5'd0; cmp_addr_2 = 5'd1; cmp_data_1 = 1; cmp_data_2 = 1;
-        chip_enable[1] = 1; chip_enable[2] = 1; chip_enable[3] = 1; chip_enable[4] = 1; chip_enable[5] = 1; #1000;
+        ppg_addr_msb = 1;
+        chip_enable[1] = 1; chip_enable[2] = 1; chip_enable[3] = 1; chip_enable[4] = 1; chip_enable[5] = 1; 
+        chip_enable[17] = 1; chip_enable[18] = 1; chip_enable[19] = 1; chip_enable[20] = 1; chip_enable[21] = 1;
+        #10;
         chip_enable[1] = 0; chip_enable[2] = 0; chip_enable[3] = 0; chip_enable[4] = 0; chip_enable[5] = 0;
+        chip_enable[17] = 0; chip_enable[18] = 0; chip_enable[19] = 0; chip_enable[20] = 0; chip_enable[21] = 0; 
 
-        // 状态1 + 状态2，指数部分 mem1 到 mem5 串行修改C和S，得到Esum，Esum存储在meta data第三行
-        // 对于每一位都要搜索1_0, 0_1, 1_1，以此来更新meta data中的C和S
+        // State 1 + state 2, exponential parts mem1 to mem5 serially modify C and S to obtain Esum, Esum is stored in the third row of meta data
+        // Search for 1_0, 0_1, 1_1 for each bit to update C and S in meta data
         cmp_addr_1 = 5'd0;  cmp_addr_2 = 5'd0;
          
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[5] = 1;#1000;chip_enable[5] = 0;
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[5] = 1;#1000;chip_enable[5] = 0;
-        state_ctrl = 5'd2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[5] = 1;#1000;chip_enable[5] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[5] = 1; chip_enable[21] = 1;#10;chip_enable[5] = 0; chip_enable[21] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[5] = 1; chip_enable[21] = 1;#10;chip_enable[5] = 0; chip_enable[21] = 0;
+        state_ctrl = 5'd2; ppg_addr_msb = 1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[5] = 1; chip_enable[21] = 1;#10;chip_enable[5] = 0; chip_enable[21] = 0;
 
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[4] = 1;#1000;chip_enable[4] = 0;
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[4] = 1;#1000;chip_enable[4] = 0;
-        state_ctrl = 5'd2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[4] = 1;#1000;chip_enable[4] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[4] = 1; chip_enable[20] = 1;#10;chip_enable[4] = 0; chip_enable[20] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[4] = 1; chip_enable[20] = 1;#10;chip_enable[4] = 0; chip_enable[20] = 0;
+        state_ctrl = 5'd2; ppg_addr_msb = 1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[4] = 1; chip_enable[20] = 1;#10;chip_enable[4] = 0; chip_enable[20] = 0;
         
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[3] = 1;#1000;chip_enable[3] = 0;
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[3] = 1;#1000;chip_enable[3] = 0;
-        state_ctrl = 5'd2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[3] = 1;#1000;chip_enable[3] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[3] = 1; chip_enable[19] = 1;#10;chip_enable[3] = 0; chip_enable[19] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[3] = 1; chip_enable[19] = 1;#10;chip_enable[3] = 0; chip_enable[19] = 0;
+        state_ctrl = 5'd2; ppg_addr_msb = 1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[3] = 1; chip_enable[19] = 1;#10;chip_enable[3] = 0; chip_enable[19] = 0;
 
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[4] = 1;#1000;chip_enable[2] = 0;
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[4] = 1;#1000;chip_enable[2] = 0;
-        state_ctrl = 5'd2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[4] = 1;#1000;chip_enable[2] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[2] = 1; chip_enable[18] = 1;#10;chip_enable[2] = 0; chip_enable[18] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[2] = 1; chip_enable[18] = 1;#10;chip_enable[2] = 0; chip_enable[18] = 0;
+        state_ctrl = 5'd2; ppg_addr_msb = 1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[2] = 1; chip_enable[18] = 1;#10;chip_enable[2] = 0; chip_enable[18] = 0;
         
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[4] = 1;#1000;chip_enable[1] = 0;
-        state_ctrl = 5'd1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[4] = 1;#1000;chip_enable[1] = 0;
-        state_ctrl = 5'd2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[4] = 1;#1000;chip_enable[1] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 0; chip_enable[1] = 1; chip_enable[17] = 1;#10;chip_enable[1] = 0; chip_enable[17] = 0;
+        state_ctrl = 5'd1; ppg_addr_msb = 2; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 0; ppg_data_2 = 1; chip_enable[1] = 1; chip_enable[17] = 1;#10;chip_enable[1] = 0; chip_enable[17] = 0;
+        state_ctrl = 5'd2; ppg_addr_msb = 1; ppg_addr_1 = 5'd0; ppg_addr_2 = 5'd1; ppg_data_1 = 1; ppg_data_2 = 1; chip_enable[1] = 1; chip_enable[17] = 1;#10;chip_enable[1] = 0; chip_enable[17] = 0;
 
-        // 状态4到状态8，搬运每一位的Esum到最高指数位
-        state_ctrl = 5'd8;#1000;
-        state_ctrl = 5'd7;#1000;
-        state_ctrl = 5'd6;#1000;
-        state_ctrl = 5'd5;#1000;
-        state_ctrl = 5'd4;#1000;
+        // State 4 to state 8, carry each bit of Esum to the highest exponent bit
+        ppg_addr_msb = 2;
+        state_ctrl = 5'd8;#10;
+        state_ctrl = 5'd7;#10;
+        state_ctrl = 5'd6;#10;
+        state_ctrl = 5'd5;#10;
+        state_ctrl = 5'd4;#10;
 
-        // 状态9，要逐位输出到加法器来找最大指数值
+        // State 9, which has to be output bit by bit to the adder to find the maximum exponent value
         state_ctrl = 5'd9;
         ppg_addr_1 = 0; @(posedge CLK); #1; $display("sum0 = %d, sum1 = %d", sum_0, sum_1);
         ppg_addr_1 = 1; @(posedge CLK); #1; $display("sum0 = %d, sum1 = %d", sum_0, sum_1);
@@ -219,65 +288,91 @@ module tb_CAM_Top;
         ppg_addr_1 = 3; @(posedge CLK); #1; $display("sum0 = %d, sum1 = %d", sum_0, sum_1);
         ppg_addr_1 = 4; @(posedge CLK); #1; $display("sum0 = %d, sum1 = %d", sum_0, sum_1);
 
-        // 假设现在找到最大值Emax，接下来逐个搜索 Emax - m + i，对尾数1进行右移操作，状态 30 和 3 交替进行
+        // Suppose now that the maximum value Emax is found, and next search Emax -m + i one by one, with a right shift operation on mansa 1, alternating states 30 and 3
         Emax_0 = 8'b00000110;
-        Emax_1 = 8'b00000000;
+        Emax_1 = 8'b00000100;
         state_ctrl = 5'd30;
+        ppg_addr_msb = 0;
         exp_in_1 = Emax_0 - 4;
         exp_in_2 = Emax_1 - 4;
-        #1000; $display("MSBtotag = %b", uut.MSBtotag_1);
+        #20; 
+        //$display("MSBtotag_1 = %b", uut.MSBtotag_1);$display("MSBtotag_2 = %b", uut.MSBtotag_2);
         state_ctrl = 5'd3; cmp_addr_1 = 0; 
+        ppg_addr_msb = 0; 
         chip_enable[5]=1;chip_enable[6]=1;chip_enable[7]=1;chip_enable[8]=1;chip_enable[9]=1;chip_enable[10]=1;chip_enable[11]=1;chip_enable[12]=1;chip_enable[13]=1;chip_enable[14]=1;
+        chip_enable[21]=1;chip_enable[22]=1;chip_enable[23]=1;chip_enable[24]=1;chip_enable[25]=1;chip_enable[26]=1;chip_enable[27]=1;chip_enable[28]=1;chip_enable[29]=1;chip_enable[30]=1;
         #10;chip_enable[5]=0;chip_enable[6]=0;chip_enable[7]=0;chip_enable[8]=0;chip_enable[9]=0;chip_enable[10]=0;chip_enable[11]=0;chip_enable[12]=0;chip_enable[13]=0;chip_enable[14]=0;
+        chip_enable[21]=0;chip_enable[22]=0;chip_enable[23]=0;chip_enable[24]=0;chip_enable[25]=0;chip_enable[26]=0;chip_enable[27]=0;chip_enable[28]=0;chip_enable[29]=0;chip_enable[30]=0;
 
         state_ctrl = 5'd30;
+        ppg_addr_msb = 0;
         exp_in_1 = Emax_0 - 3;
         exp_in_2 = Emax_1 - 3;
-        #1000; $display("MSBtotag = %b", uut.MSBtotag_1);
+        #20; 
+        //$display("MSBtotag_1 = %b", uut.MSBtotag_1);$display("MSBtotag_2 = %b", uut.MSBtotag_2);
         state_ctrl = 5'd3; cmp_addr_1 = 0; 
+        ppg_addr_msb = 0; 
         chip_enable[5]=1;chip_enable[6]=1;chip_enable[7]=1;chip_enable[8]=1;chip_enable[9]=1;chip_enable[10]=1;chip_enable[11]=1;chip_enable[12]=1;chip_enable[13]=1;chip_enable[14]=1;
+        chip_enable[21]=1;chip_enable[22]=1;chip_enable[23]=1;chip_enable[24]=1;chip_enable[25]=1;chip_enable[26]=1;chip_enable[27]=1;chip_enable[28]=1;chip_enable[29]=1;chip_enable[30]=1;
         #10;chip_enable[5]=0;chip_enable[6]=0;chip_enable[7]=0;chip_enable[8]=0;chip_enable[9]=0;chip_enable[10]=0;chip_enable[11]=0;chip_enable[12]=0;chip_enable[13]=0;chip_enable[14]=0;
+        chip_enable[21]=0;chip_enable[22]=0;chip_enable[23]=0;chip_enable[24]=0;chip_enable[25]=0;chip_enable[26]=0;chip_enable[27]=0;chip_enable[28]=0;chip_enable[29]=0;chip_enable[30]=0;
 
         state_ctrl = 5'd30;
+        ppg_addr_msb = 0;
         exp_in_1 = Emax_0 - 2;
         exp_in_2 = Emax_1 - 2;
-        #1000; $display("MSBtotag = %b", uut.MSBtotag_1);
+        #20; 
+        //$display("MSBtotag_1 = %b", uut.MSBtotag_1);$display("MSBtotag_2 = %b", uut.MSBtotag_2);
         state_ctrl = 5'd3; cmp_addr_1 = 0; 
+        ppg_addr_msb = 0; 
         chip_enable[5]=1;chip_enable[6]=1;chip_enable[7]=1;chip_enable[8]=1;chip_enable[9]=1;chip_enable[10]=1;chip_enable[11]=1;chip_enable[12]=1;chip_enable[13]=1;chip_enable[14]=1;
+        chip_enable[21]=1;chip_enable[22]=1;chip_enable[23]=1;chip_enable[24]=1;chip_enable[25]=1;chip_enable[26]=1;chip_enable[27]=1;chip_enable[28]=1;chip_enable[29]=1;chip_enable[30]=1;
         #10;chip_enable[5]=0;chip_enable[6]=0;chip_enable[7]=0;chip_enable[8]=0;chip_enable[9]=0;chip_enable[10]=0;chip_enable[11]=0;chip_enable[12]=0;chip_enable[13]=0;chip_enable[14]=0;
+        chip_enable[21]=0;chip_enable[22]=0;chip_enable[23]=0;chip_enable[24]=0;chip_enable[25]=0;chip_enable[26]=0;chip_enable[27]=0;chip_enable[28]=0;chip_enable[29]=0;chip_enable[30]=0;
 
         state_ctrl = 5'd30;
+        ppg_addr_msb = 0;
         exp_in_1 = Emax_0 - 1;
         exp_in_2 = Emax_1 - 1;
-        #1000; $display("MSBtotag = %b", uut.MSBtotag_1);
+        #20; 
+        //$display("MSBtotag_1 = %b", uut.MSBtotag_1);$display("MSBtotag_2 = %b", uut.MSBtotag_2);
         state_ctrl = 5'd3; cmp_addr_1 = 0; 
+        ppg_addr_msb = 0; 
         chip_enable[5]=1;chip_enable[6]=1;chip_enable[7]=1;chip_enable[8]=1;chip_enable[9]=1;chip_enable[10]=1;chip_enable[11]=1;chip_enable[12]=1;chip_enable[13]=1;chip_enable[14]=1;
+        chip_enable[21]=1;chip_enable[22]=1;chip_enable[23]=1;chip_enable[24]=1;chip_enable[25]=1;chip_enable[26]=1;chip_enable[27]=1;chip_enable[28]=1;chip_enable[29]=1;chip_enable[30]=1;
         #10;chip_enable[5]=0;chip_enable[6]=0;chip_enable[7]=0;chip_enable[8]=0;chip_enable[9]=0;chip_enable[10]=0;chip_enable[11]=0;chip_enable[12]=0;chip_enable[13]=0;chip_enable[14]=0;
+        chip_enable[21]=0;chip_enable[22]=0;chip_enable[23]=0;chip_enable[24]=0;chip_enable[25]=0;chip_enable[26]=0;chip_enable[27]=0;chip_enable[28]=0;chip_enable[29]=0;chip_enable[30]=0;
 
         state_ctrl = 5'd30;
+        ppg_addr_msb = 0;
         exp_in_1 = Emax_0;
         exp_in_2 = Emax_1;
-        #1000; $display("MSBtotag = %b", uut.MSBtotag_1); // 最后找 Emax_0 和 Emax_1 不需要右移，只需要修改 MSBtotag
+        #20; 
+        //$display("MSBtotag_1 = %b", uut.MSBtotag_1); $display("MSBtotag_2 = %b", uut.MSBtotag_2);// Finally, to find Emax_0 and Emax_1, we do not need to shift to the right, but only need to modify MSBtotag
 
-        // 对于MSBtotag = 0 的情况，即指数部分太小的元素要全部清零
+        // For the case of MSBtotag = 0, that is, the elements with too small index part are all zeroed out
         state_ctrl = 5'd1;
         SEARCH_2row = 1'b0;
+        ppg_addr_msb = 0; 
         chip_enable[6]=1;chip_enable[7]=1;chip_enable[8]=1;chip_enable[9]=1;chip_enable[10]=1;chip_enable[11]=1;chip_enable[12]=1;chip_enable[13]=1;chip_enable[14]=1;chip_enable[15]=1;
+        chip_enable[22]=1;chip_enable[23]=1;chip_enable[24]=1;chip_enable[25]=1;chip_enable[26]=1;chip_enable[27]=1;chip_enable[28]=1;chip_enable[29]=1;chip_enable[30]=1;chip_enable[31]=1;
         #10;chip_enable[6]=0;chip_enable[7]=0;chip_enable[8]=0;chip_enable[9]=0;chip_enable[10]=0;chip_enable[11]=0;chip_enable[12]=0;chip_enable[13]=0;chip_enable[14]=0;chip_enable[15]=0;
+        chip_enable[22]=0;chip_enable[23]=0;chip_enable[24]=0;chip_enable[25]=0;chip_enable[26]=0;chip_enable[27]=0;chip_enable[28]=0;chip_enable[29]=0;chip_enable[30]=0;chip_enable[31]=0;
 
-        // 打印尾数部分的图像
+        //Print the image of the mantissa part
         print_mem(6);
         print_mem(7);
         print_mem(8);
         print_mem(9);
         print_mem(10);
 
-        // 逐位数据处理 + 逐位加法器输出
+        // Bit by bit data processing + bit by bit adder output
         cmp_addr_1 = 0;
         cmp_addr_2 = 1;
+        ppg_addr_msb = 0;
         SEARCH_2row = 1'b0;
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd10; #1000; // 第一次点积部分积计算
+        state_ctrl = 5'd10; #10; // First dot product partial product calculation
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -294,7 +389,7 @@ module tb_CAM_Top;
 
         
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd11; #1000; // 第二次点积部分积计算
+        state_ctrl = 5'd11; #10; // The second dot product partial product is computed
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -310,7 +405,7 @@ module tb_CAM_Top;
         $display("For 2nd calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd12; #1000; // 第三次点积部分积计算
+        state_ctrl = 5'd12; #10; // Third dot product partial product calculation
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -326,7 +421,7 @@ module tb_CAM_Top;
         $display("For 3rd calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd13; #1000; // 第四次点积部分积计算
+        state_ctrl = 5'd13; #10; // The fourth dot product partial product is computed
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -342,7 +437,7 @@ module tb_CAM_Top;
         $display("For 4th calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd14; #1000; // 第五次点积部分积计算
+        state_ctrl = 5'd14; #10; // The fifth dot product partial product is computed
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -358,7 +453,7 @@ module tb_CAM_Top;
         $display("For 5th calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd15; #1000; // 第六次点积部分积计算
+        state_ctrl = 5'd15; #10; // Sixth dot product partial product calculation
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -374,7 +469,7 @@ module tb_CAM_Top;
         $display("For 6th calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd16; #1000; // 第七次点积部分积计算
+        state_ctrl = 5'd16; #10; // The seventh dot product partial product is computed
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -390,7 +485,7 @@ module tb_CAM_Top;
         $display("For 7th calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd17; #1000; // 第八次点积部分积计算
+        state_ctrl = 5'd17; #10; // The eighth dot product partial product is computed
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -406,7 +501,7 @@ module tb_CAM_Top;
         $display("For 8th calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd18; #1000; // 第九次点积部分积计算
+        state_ctrl = 5'd18; #10; // Ninth dot product partial product calculation
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -422,7 +517,7 @@ module tb_CAM_Top;
         $display("For 9th calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         part_sum_0 <= 0; part_sum_1 <= 0;
-        state_ctrl = 5'd19; #1000; // 第十次点积部分积计算
+        state_ctrl = 5'd19; #10; // Tenth dot product partial product calculation
         state_ctrl = 5'd20; @(posedge CLK); #1; $display("For 1st bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0; part_sum_1 <= part_sum_1 + sum_1;
         state_ctrl = 5'd21; @(posedge CLK); #1; $display("For 2nd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/2.0; part_sum_1 <= part_sum_1 + sum_1/2.0;
         state_ctrl = 5'd22; @(posedge CLK); #1; $display("For 3rd bit: sum0 = %d, sum1 = %d", sum_0, sum_1); part_sum_0 <= part_sum_0 + sum_0/4.0; part_sum_1 <= part_sum_1 + sum_1/4.0;
@@ -438,18 +533,34 @@ module tb_CAM_Top;
         $display("For 10th calculate: final_result_0 = %f, final_result_1 = %f", final_result_0, final_result_1);
 
         $display("Considering the exp: final_result_0 = %f, final_result_1 = %f", final_result_0 * (1 << Emax_0), final_result_1 * (1 << Emax_1));
+         if (abs(input_0 - (final_result_0 * (1 << Emax_0))) / input_0 < 0.05 && abs(input_1 - (final_result_1 * (1 << Emax_1))) / input_1 < 0.05) 
+            $display("The result is CORRECT!");
+        else 
+            $display("The result is INCORRECT!");
+
         //print_mem_exp_max(1);
         //print_mem(2);
         //print_mem(3);
         //print_mem(4);
         //print_mem(5);
         
-        // 结束仿真
-        #20;
+        // End simulation
         $finish;
     end
 
-    task print_mem; //打印大小为36x32的subarray
+    // A function that calculates absolute values
+    function [31:0] abs;
+        input [31:0] value;
+        begin
+            if (value[31] == 1)  
+                abs = -value;  
+            else
+                abs = value;  
+        end
+    endfunction
+
+
+    task print_mem; // Print a subarray of size 36x32
         input integer mem_idx;
         integer i, j;
         begin
@@ -488,7 +599,7 @@ module tb_CAM_Top;
                         29: $write("%b ", uut.mem29[i][j]);
                         30: $write("%b ", uut.mem30[i][j]);
                         31: $write("%b ", uut.mem31[i][j]);
-                        default: $write("X "); // 非法编号
+                        default: $write("X "); // Illegal number
                     endcase
                 end
                 $display();
@@ -498,7 +609,7 @@ module tb_CAM_Top;
     endtask
 
 
-    task print_mem_exp_max; //打印大小为40x32的subarray
+    task print_mem_exp_max; // Print a subarray of size 40x32
         input integer mem_idx;
         integer i, j;
         begin
@@ -509,7 +620,7 @@ module tb_CAM_Top;
                     case (mem_idx)
                         1 : $write("%b ", uut.mem1[i][j]);  
                         17: $write("%b ", uut.mem17[i][j]);
-                        default: $write("X "); // 非法编号
+                        default: $write("X "); // Illegal number
                     endcase
                 end
                 $display();
@@ -519,7 +630,7 @@ module tb_CAM_Top;
     endtask
 
 
-    task clear_mem; //初始化大小为36x32的subarray
+    task clear_mem; // Initialize a subarray of size 36x32
         input integer mem_idx;
         integer i, j;
         begin
@@ -563,7 +674,7 @@ module tb_CAM_Top;
         end
     endtask
 
-    task clear_mem_exp_max; //初始化大小为40x32的subarray
+    task clear_mem_exp_max; // Initialize a subarray of size 40x32
         input integer mem_idx;
         integer i, j;
         begin
